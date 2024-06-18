@@ -1,15 +1,31 @@
-from orchestrator.orchestrator import Orchestrator, Task
+from orchestrator.orchestrator import Orchestrator
+from orchestrator.types import Task
+from orchestrator.storage.storage import LocalStorage
 
-def test_notify():
-    is_successful: bool = False
+def test_add_task():
+    s = LocalStorage()
+    o = Orchestrator(s)
+
+    o.add_task({"id": "stuff", "foo": "bar"})
+    assert(s.has_task("stuff"))
+
+    o.add_task({"id": "stuff", "foo": "zooom"})
+
+    attr = s.get("stuff")["foo"]
+    
+    assert(attr == "bar")
+
+def test_add_notify():
+    s = LocalStorage()
+    o = Orchestrator(s)
+
+    id = ""
     def callback(task: Task) -> None:
-        print(task)
-        nonlocal is_successful
-        is_successful = True
-
-    o = Orchestrator()
+        nonlocal id
+        id = task["id"]
 
     o.register_on_task_completion(callback)
-    o._notify_task_completion({"stuff": "test"})
+    o.add_task({"id": "test"})
 
-    assert(is_successful)
+    assert (id == "test")
+
