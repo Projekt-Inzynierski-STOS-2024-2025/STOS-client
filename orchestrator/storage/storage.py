@@ -23,6 +23,10 @@ class IStorage(ABC):
     def delete_task(self, id: str) -> None:
         pass
 
+    @abstractmethod
+    def get_all_tasks(self) -> list[Task]:
+        pass
+
 
 class LocalStorage(IStorage):
 
@@ -43,6 +47,10 @@ class LocalStorage(IStorage):
     @override
     def delete_task(self, id: str) -> None:
         _ = self.__storage.pop(id)
+
+    @override
+    def get_all_tasks(self) -> list[Task]:
+        return list(self.__storage.values())
 
         
         

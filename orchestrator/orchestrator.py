@@ -4,10 +4,13 @@ from abc import ABC, abstractmethod
 from typing import override
 
 from orchestrator.storage.storage import IStorage
+from orchestrator.strategy.strategy import DefaultOrchestratorStrategy, IOrchestratorStrategy
 from orchestrator.types import Task, TaskHandler
 
+# Interface used for communication with cache module
 class IOrchestrator(ABC):
 
+    # It should be called in a separate thread/coroutine - otherwise blocks
     @abstractmethod
     def add_task(self, task: Task):
         pass
@@ -16,20 +19,26 @@ class IOrchestrator(ABC):
     def register_on_task_completion(self, handler: TaskHandler):
         pass
 
-
+# Class used for management of containers according to the chosen strategy
 class Orchestrator(IOrchestrator):
 
     __task_completion_handlers: list[TaskHandler] = []
     __storage: IStorage
+    __strategy: type[IOrchestratorStrategy]
 
-    def __init__(self, storage: IStorage) -> None:
+    def __init__(self, storage: IStorage, strategy: type[IOrchestratorStrategy] = DefaultOrchestratorStrategy) -> None:
         self.__storage = storage
+        self.__strategy = strategy
 
     @override
     def add_task(self, task: Task):
         if not self.__storage.has_task(task["id"]):
-            self.__storage.put(task)
-            self.__handle_new_task(task)
+            if self.__strategy.can_add_task(self.__storage.get_all_tasks()):
+                self.__storage.put(task)
+                self.__handle_new_task(task)
+            else:
+                # TODO - create buffer of to-be-added tasks, updated with task completion
+                pass
 
     @override
     def register_on_task_completion(self, handler: TaskHandler):
