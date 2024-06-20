@@ -3,21 +3,19 @@ from orchestrator.types import Task
 from orchestrator.storage.storage import LocalStorage
 
 def test_add_task():
-    s = LocalStorage()
-    o = Orchestrator(s)
+    o = Orchestrator()
 
     o.add_task({"id": "stuff", "foo": "bar"})
-    assert(s.has_task("stuff"))
+    assert(LocalStorage.has_task("stuff"))
 
     o.add_task({"id": "stuff", "foo": "zooom"})
 
-    attr = s.get("stuff")["foo"]
+    attr = LocalStorage.get("stuff")["foo"]
     
     assert(attr == "bar")
 
 def test_add_notify():
-    s = LocalStorage()
-    o = Orchestrator(s)
+    o = Orchestrator()
 
     id = ""
     def callback(task: Task) -> None:
@@ -29,3 +27,10 @@ def test_add_notify():
 
     assert (id == "test")
 
+def test_add_too_many():
+    o = Orchestrator()
+
+    for i in range(2000):
+        o.add_task({"id": str(i)})
+
+    assert len(LocalStorage.get_all_tasks()) == 10
